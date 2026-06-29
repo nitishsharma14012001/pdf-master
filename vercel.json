@@ -35,12 +35,14 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://your-backend.onrender.com/api/$1"
+      "dest": "https://pdf-master-api-0h3j.onrender.com/api/$1"
+    },
+    {
+      "handle": "filesystem"
     },
     {
       "src": "/(.*)",
       "dest": "/frontend/dist/$1"
     }
   ]
-}
 }
