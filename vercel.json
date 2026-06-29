@@ -1,26 +1,12 @@
 {
-  "version": 2,
-  "name": "pdf-master",
-  "builds": [
+  "rewrites": [
     {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "https://pdf-master-api-0h3j.onrender.com/api/$1"
+      "source": "/api/:path*",
+      "destination": "https://pdf-master-api-0h3j.onrender.com/api/:path*"
     },
     {
-      "handle": "filesystem"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/frontend/dist/$1"
+      "source": "/(.*)",
+      "destination": "/index.html"
     }
   ]
 }
