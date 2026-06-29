@@ -1,0 +1,12 @@
+# PDF Master — robots.txt
+# https://pdfmaster.app
+
+User-agent: *
+Allow: /
+Allow: /tools/
+Disallow: /admin
+Disallow: /dashboard
+Disallow: /api/
+Disallow: /forgot-password
+
+Sitemap: https://pdfmaster.app/sitemap.xml

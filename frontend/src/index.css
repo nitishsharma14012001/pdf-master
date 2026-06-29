@@ -1,0 +1,271 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --primary: #2563eb;
+    --primary-dark: #1d4ed8;
+    --accent: #ec4899;
+    --bg: #ffffff;
+    --bg-secondary: #f8fafc;
+    --text: #0f172a;
+    --text-muted: #64748b;
+    --border: #e2e8f0;
+    --card: #ffffff;
+    --shadow: rgba(0,0,0,0.08);
+  }
+
+  .dark {
+    --bg: #0f172a;
+    --bg-secondary: #1e293b;
+    --text: #f1f5f9;
+    --text-muted: #94a3b8;
+    --border: #334155;
+    --card: #1e293b;
+    --shadow: rgba(0,0,0,0.4);
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    background-color: var(--bg);
+    color: var(--text);
+    font-family: 'Inter', system-ui, sans-serif;
+    line-height: 1.6;
+    transition: background-color 0.3s ease, color 0.3s ease;
+  }
+
+  ::selection {
+    background-color: #2563eb33;
+    color: #1d4ed8;
+  }
+
+  /* Visible keyboard focus ring everywhere, not just on elements that opt in */
+  :focus-visible {
+    outline: 2px solid #2563eb;
+    outline-offset: 2px;
+    border-radius: 4px;
+  }
+
+  /* Respect a user's OS-level high-contrast preference */
+  @media (prefers-contrast: more) {
+    :root {
+      --border: #475569;
+      --text-muted: #334155;
+    }
+    .dark {
+      --border: #cbd5e1;
+      --text-muted: #cbd5e1;
+    }
+  }
+}
+
+@layer components {
+  /* Gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-blue-600 via-violet-600 to-pink-500 bg-clip-text text-transparent;
+  }
+
+  /* Animated gradient background */
+  .gradient-bg {
+    background: linear-gradient(-45deg, #2563eb, #7c3aed, #ec4899, #0ea5e9);
+    background-size: 400% 400%;
+    animation: gradient 12s ease infinite;
+  }
+
+  /* Glass card */
+  .glass-card {
+    background: rgba(255, 255, 255, 0.08);
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+    border: 1px solid rgba(255, 255, 255, 0.15);
+  }
+
+  .dark .glass-card {
+    background: rgba(15, 23, 42, 0.6);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+  }
+
+  /* Tool card */
+  .tool-card {
+    @apply relative overflow-hidden rounded-2xl p-6 transition-all duration-300 cursor-pointer;
+    background: var(--card);
+    border: 1px solid var(--border);
+    box-shadow: 0 1px 3px var(--shadow);
+  }
+
+  .tool-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 20px 40px var(--shadow);
+    border-color: #2563eb44;
+  }
+
+  /* Button styles */
+  .btn-primary {
+    @apply inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold text-white transition-all duration-200;
+    background: linear-gradient(135deg, #2563eb, #7c3aed);
+    box-shadow: 0 4px 15px rgba(37, 99, 235, 0.3);
+  }
+
+  .btn-primary:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(37, 99, 235, 0.4);
+  }
+
+  .btn-primary:active {
+    transform: translateY(0);
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 px-6 py-3 rounded-xl font-semibold transition-all duration-200;
+    background: var(--bg-secondary);
+    color: var(--text);
+    border: 1px solid var(--border);
+  }
+
+  .btn-secondary:hover {
+    border-color: #2563eb;
+    color: #2563eb;
+    transform: translateY(-1px);
+  }
+
+  /* Drop zone */
+  .dropzone {
+    @apply relative rounded-2xl border-2 border-dashed p-12 text-center transition-all duration-300 cursor-pointer;
+    border-color: var(--border);
+    background: var(--bg-secondary);
+  }
+
+  .dropzone:hover, .dropzone.active {
+    border-color: #2563eb;
+    background: rgba(37, 99, 235, 0.05);
+  }
+
+  /* Progress bar */
+  .progress-track {
+    @apply w-full rounded-full overflow-hidden;
+    height: 6px;
+    background: var(--border);
+  }
+
+  .progress-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #2563eb, #7c3aed);
+    border-radius: 9999px;
+    transition: width 0.4s ease;
+  }
+
+  /* Section container */
+  .section {
+    @apply py-20 px-4;
+  }
+
+  .container-main {
+    @apply max-w-7xl mx-auto;
+  }
+
+  /* Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: var(--bg-secondary);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: #2563eb66;
+    border-radius: 3px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: #2563eb;
+  }
+
+  /* Ad placeholder */
+  .ad-placeholder {
+    @apply flex items-center justify-center rounded-xl text-sm font-medium;
+    background: var(--bg-secondary);
+    border: 2px dashed var(--border);
+    color: var(--text-muted);
+    min-height: 90px;
+  }
+
+  /* Input styles */
+  .input-field {
+    @apply w-full px-4 py-3 rounded-xl transition-all duration-200 outline-none;
+    background: var(--bg-secondary);
+    border: 1px solid var(--border);
+    color: var(--text);
+  }
+
+  .input-field:focus {
+    border-color: #2563eb;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15);
+  }
+
+  /* Badge */
+  .badge {
+    @apply inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-semibold;
+  }
+
+  .badge-blue {
+    background: rgba(37, 99, 235, 0.12);
+    color: #2563eb;
+  }
+
+  .badge-green {
+    background: rgba(16, 185, 129, 0.12);
+    color: #059669;
+  }
+
+  .badge-purple {
+    background: rgba(124, 58, 237, 0.12);
+    color: #7c3aed;
+  }
+
+  .badge-pink {
+    background: rgba(236, 72, 153, 0.12);
+    color: #ec4899;
+  }
+
+  .badge-amber {
+    background: rgba(245, 158, 11, 0.12);
+    color: #d97706;
+  }
+}
+
+@layer utilities {
+  .animate-gradient {
+    background-size: 300%;
+    animation: gradient 8s ease infinite;
+  }
+
+  @keyframes gradient {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  /* Button ripple effect (see ui/RippleButton.jsx) */
+  @keyframes ripple-expand {
+    0% { transform: scale(0); opacity: 0.6; }
+    100% { transform: scale(1); opacity: 0; }
+  }
+}
+
+/* Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
