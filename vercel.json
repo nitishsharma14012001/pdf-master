@@ -16,28 +16,6 @@
       "dest": "https://pdf-master-api-0h3j.onrender.com/api/$1"
     },
     {
-      "src": "/(.*)",
-      "dest": "/frontend/dist/$1"
-    }
-  ],
-  {
-  "version": 2,
-  "name": "pdf-master",
-  "builds": [
-    {
-      "src": "frontend/package.json",
-      "use": "@vercel/static-build",
-      "config": {
-        "distDir": "dist"
-      }
-    }
-  ],
-  "routes": [
-    {
-      "src": "/api/(.*)",
-      "dest": "https://pdf-master-api-0h3j.onrender.com/api/$1"
-    },
-    {
       "handle": "filesystem"
     },
     {
