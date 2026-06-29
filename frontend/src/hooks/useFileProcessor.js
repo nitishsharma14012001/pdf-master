@@ -1,7 +1,9 @@
 import { useState, useCallback } from 'react'
 import axios from 'axios'
 
-const API_BASE = import.meta.env.VITE_API_URL || '/api'
+const API_BASE =
+  import.meta.env.VITE_API_URL ||
+  'https://pdf-master-api-0h3j.onrender.com/api'
 
 /**
  * Hook that wraps the tool-processing API call.
