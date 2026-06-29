@@ -45,6 +45,9 @@ const PORT = parseInt(process.env.PORT || '5000', 10)
 const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads'
 fs.mkdirSync(UPLOAD_DIR, { recursive: true })
 
+// Render runs Express behind a proxy. This lets rate limiting and req.ip use the forwarded client IP.
+app.set('trust proxy', 1)
+
 // ── 1. Helmet — security headers ──────────────────────────────────────────────
 app.use(helmet({
   // Content-Security-Policy: only allow same origin; no inline scripts/styles
@@ -91,25 +94,47 @@ app.use((req, res, next) => {
   next()
 })
 
-// ── 2. CORS — strict origin allowlist ────────────────────────────────────────
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || 'http://localhost:3000')
-  .split(',')
-  .map(o => o.trim())
-  .filter(Boolean)
+// ── 2. CORS — strict origin allowlist ──────────────────────────────────────────
+function normalizeOrigin(origin) {
+  return origin ? origin.trim().replace(/\/+$/, '') : ''
+}
+
+function collectAllowedOrigins() {
+  const configured = (process.env.ALLOWED_ORIGINS || '')
+    .split(',')
+    .map(normalizeOrigin)
+    .filter(Boolean)
+
+  const deploymentOrigins = [
+    'http://localhost:3000',
+    'http://localhost:5173',
+    process.env.FRONTEND_URL,
+    process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : '',
+  ]
+    .map(normalizeOrigin)
+    .filter(Boolean)
+
+  return [...new Set([...configured, ...deploymentOrigins])]
+}
+
+const allowedOrigins = collectAllowedOrigins()
 
 const corsOptions = {
   origin(origin, cb) {
-    // Allow server-to-server (no Origin header), curl, Postman in dev
+    // Allow same-origin rewrites, server-to-server calls, curl, and health checks.
     if (!origin) return cb(null, true)
-    if (allowedOrigins.includes(origin)) return cb(null, true)
+
+    const normalized = normalizeOrigin(origin)
+    if (allowedOrigins.includes(normalized)) return cb(null, true)
+
     logger.warn('CORS: rejected origin', { origin })
-    cb(new Error(`CORS policy does not allow origin: ${origin}`))
+    return cb(null, false)
   },
   credentials:     true,
   methods:         ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders:  ['Content-Type', 'Authorization'],
-  exposedHeaders:  ['Content-Disposition'],   // needed so browsers can read download filenames
-  maxAge:          86_400,                     // preflight cache: 24 h
+  exposedHeaders:  ['Content-Disposition'],
+  maxAge:          86_400,
 }
 
 app.use(cors(corsOptions))
@@ -131,7 +156,7 @@ app.use(morgan(morganFormat, {
 // ── 4a. Global rate limiter ───────────────────────────────────────────────────
 const globalLimiter = rateLimit({
   windowMs:       parseInt(process.env.RATE_LIMIT_WINDOW_MS || '900000', 10), // 15 min
-  max:            500,
+  max:            parseInt(process.env.RATE_LIMIT_MAX || '500', 10),
   standardHeaders: true,   // Return rate limit info in the `RateLimit-*` headers
   legacyHeaders:  false,   // Disable the `X-RateLimit-*` headers
   message:        { error: 'Too many requests — please slow down.' },

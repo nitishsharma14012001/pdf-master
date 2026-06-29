@@ -26,10 +26,11 @@ const fs      = require('fs')
 const fsp     = require('fs/promises')
 const { z }   = require('zod')
 
-const { createUploader, enforceSizeLimit, handleUploadError } = require('../middleware/upload')
+const { createUploader, enforceSizeLimit, enforceMagicBytes, handleUploadError } = require('../middleware/upload')
 const { optionalAuth }  = require('../middleware/auth')
-const { processTool }   = require('../controllers/toolsController')
+const { processTool, getAvailableTools } = require('../controllers/toolsController')
 const logger            = require('../utils/logger')
+const { AppError }      = require('../utils/errors')
 
 // ── Config ────────────────────────────────────────────────────────────────────
 const UPLOAD_DIR = process.env.UPLOAD_DIR || './uploads'
@@ -53,23 +54,25 @@ const upload = createUploader(20)
 //
 // Tools not listed here are rejected with 404.
 
+const IMPLEMENTED_TOOL_IDS = new Set(getAvailableTools())
+
 const TOOL_CONFIG = {
-  // Image → PDF
+  // Image -> PDF
   'jpg-to-pdf':        { minFiles: 1, maxFiles: 20, accept: ['image'] },
   'png-to-pdf':        { minFiles: 1, maxFiles: 20, accept: ['image'] },
   'webp-to-pdf':       { minFiles: 1, maxFiles: 20, accept: ['image'] },
 
   // Image editing
   'resize-image':      { minFiles: 1, maxFiles: 1,  accept: ['image'] },
-  'compress-image':    { minFiles: 1, maxFiles: 1,  accept: ['image'] },
+  'compress-image':    { minFiles: 1, maxFiles: 20, accept: ['image'] },
   'crop-image':        { minFiles: 1, maxFiles: 1,  accept: ['image'] },
   'rotate-image':      { minFiles: 1, maxFiles: 1,  accept: ['image'] },
   'flip-image':        { minFiles: 1, maxFiles: 1,  accept: ['image'] },
 
   // Image format conversion
-  'convert-jpg':       { minFiles: 1, maxFiles: 1,  accept: ['image'] },
-  'convert-png':       { minFiles: 1, maxFiles: 1,  accept: ['image'] },
-  'convert-webp':      { minFiles: 1, maxFiles: 1,  accept: ['image'] },
+  'convert-jpg':       { minFiles: 1, maxFiles: 20, accept: ['image'] },
+  'convert-png':       { minFiles: 1, maxFiles: 20, accept: ['image'] },
+  'convert-webp':      { minFiles: 1, maxFiles: 20, accept: ['image'] },
 
   // PDF manipulation
   'merge-pdf':         { minFiles: 2, maxFiles: 20, accept: ['pdf'] },
@@ -85,7 +88,7 @@ const TOOL_CONFIG = {
 }
 
 // Flat Set of valid tool IDs (used by the catalog endpoint)
-const VALID_TOOLS = new Set(Object.keys(TOOL_CONFIG))
+const VALID_TOOLS = new Set(Object.keys(TOOL_CONFIG).filter((id) => IMPLEMENTED_TOOL_IDS.has(id)))
 
 // MIME type → category map (must stay in sync with middleware/upload.js)
 const MIME_CATEGORY = {
@@ -95,6 +98,7 @@ const MIME_CATEGORY = {
   'image/webp':        'image',
   'image/gif':         'image',
   'image/bmp':         'image',
+  'image/tiff':        'image',
   'application/msword': 'office',
   'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'office',
   'application/vnd.ms-excel': 'office',
@@ -190,14 +194,21 @@ router.post(
   optionalAuth,           // populates req.user when a valid JWT is present
   upload.array('files', 20),
   handleUploadError,      // catches multer errors before they reach the async handler
+  enforceMagicBytes,      // verifies uploaded bytes match the declared file type
   enforceSizeLimit,       // enforces per-plan file-size caps
   async (req, res) => {
     const { toolId } = req.params
 
     // ── 1. Tool existence check ───────────────────────────────────────────────
-    if (!VALID_TOOLS.has(toolId)) {
+    if (!TOOL_CONFIG[toolId]) {
       return res.status(404).json({
         error: `Unknown tool: "${toolId}". GET /api/tools for a list of valid tool IDs.`,
+      })
+    }
+
+    if (!IMPLEMENTED_TOOL_IDS.has(toolId)) {
+      return res.status(501).json({
+        error: `The "${toolId}" tool is not available in this deployment.`,
       })
     }
 
@@ -248,12 +259,17 @@ router.post(
     })
 
     // ── 6. Process ────────────────────────────────────────────────────────────
-    try {
-      console.log("req.jobId =", req.jobId);
-console.log("First uploaded file =", req.files[0]);
+    // ── 6. Process ────────────────────────────────────────────
+try {
+  const result = await processTool(
+    toolId,
+    req.files,
+    options,
+    req.jobId
+  );
 
-      const downloadUrl = `/api/tools/download/${result.jobId}/${encodeURIComponent(result.outputFile)}`
-      const expiresAt   = new Date(Date.now() + 60 * 60 * 1000).toISOString()  // 1 hour
+  const downloadUrl = `/api/tools/download/${result.jobId}/${encodeURIComponent(result.outputFile)}`;
+  const expiresAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();  // 1 hour
 
       logger.info('Tool succeeded', {
         toolId,
@@ -273,6 +289,13 @@ console.log("First uploaded file =", req.files[0]);
         expiresAt,
       })
     } catch (err) {
+      if (err?.isOperational) {
+        return res.status(err.statusCode || 400).json({
+          error: err.message,
+          details: err.details,
+        })
+      }
+
       // ZodError → 400 with field-level detail
       if (err?.constructor?.name === 'ZodError' || err?.name === 'ZodError') {
         logger.warn('Validation error in tool options', { toolId, issues: err.errors })
@@ -282,7 +305,7 @@ console.log("First uploaded file =", req.files[0]);
       // Known user errors (bad password, no pages, etc.) → 422
       const userErrorPatterns = [
         'password', 'incorrect', 'page', 'range', 'encrypt', 'unlock',
-        'at least', 'cannot delete all', 'no valid', 'no pages',
+        'at least', 'cannot delete all', 'no valid', 'no pages', 'could not process',
       ]
       const isUserError = userErrorPatterns.some(p => err.message?.toLowerCase().includes(p))
 
