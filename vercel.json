@@ -13,14 +13,34 @@
   "routes": [
     {
       "src": "/api/(.*)",
-      "dest": "https://your-backend.onrender.com/api/$1"
+      "dest": "https://pdf-master-api-0h3j.onrender.com/api/$1"
     },
     {
       "src": "/(.*)",
       "dest": "/frontend/dist/$1"
     }
   ],
-  "env": {
-    "VITE_API_URL": "@pdf_master_api_url"
-  }
+  {
+  "version": 2,
+  "name": "pdf-master",
+  "builds": [
+    {
+      "src": "frontend/package.json",
+      "use": "@vercel/static-build",
+      "config": {
+        "distDir": "dist"
+      }
+    }
+  ],
+  "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "https://your-backend.onrender.com/api/$1"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/frontend/dist/$1"
+    }
+  ]
+}
 }

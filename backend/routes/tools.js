@@ -249,12 +249,8 @@ router.post(
 
     // ── 6. Process ────────────────────────────────────────────────────────────
     try {
-      const result = await processTool(
-  toolId,
-  req.files,
-  options,
-  req.jobId
-);
+      console.log("req.jobId =", req.jobId);
+console.log("First uploaded file =", req.files[0]);
 
       const downloadUrl = `/api/tools/download/${result.jobId}/${encodeURIComponent(result.outputFile)}`
       const expiresAt   = new Date(Date.now() + 60 * 60 * 1000).toISOString()  // 1 hour
