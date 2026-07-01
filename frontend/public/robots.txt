@@ -1,5 +1,5 @@
 # PDF Master — robots.txt
-# https://pdfmaster.app
+# https://thepdfmaster.in
 
 User-agent: *
 Allow: /
@@ -9,4 +9,4 @@ Disallow: /dashboard
 Disallow: /api/
 Disallow: /forgot-password
 
-Sitemap: https://pdfmaster.app/sitemap.xml
+Sitemap: https://thepdfmaster.in/sitemap.xml

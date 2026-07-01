@@ -1,6 +1,6 @@
 import { Helmet } from 'react-helmet-async'
 
-const SITE_URL = 'https://pdfmaster.app'
+const SITE_URL = 'https://thepdfmaster.in'
 const DEFAULT_IMAGE = `${SITE_URL}/og-image.png`
 
 /**

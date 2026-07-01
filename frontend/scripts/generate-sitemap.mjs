@@ -15,7 +15,7 @@ import path from 'path'
 import { fileURLToPath } from 'url'
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url))
-const SITE_URL = process.env.SITE_URL || 'https://pdfmaster.app'
+const SITE_URL = process.env.SITE_URL || 'https://thepdfmaster.in'
 
 // Static, non-tool routes worth indexing.
 const STATIC_ROUTES = [
